@@ -711,3 +711,8 @@ var Core = (function () {
 function apiLogin(email, password) { return Core.login(email, password); }
 function apiLogout(token) { return Core.logout(token); }
 function apiCall(token, action, payload) { return Core.call(token, action, payload); }
+/** Maklumat awam (tanpa log masuk): nama & logo untuk skrin log masuk */
+function apiInfo() {
+  var s = Core.settings();
+  return { namaSistem: s.namaSistem, namaSekolah: s.namaSekolah, logoUrl: s.logoUrl };
+}

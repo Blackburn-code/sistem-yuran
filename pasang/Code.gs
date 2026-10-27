@@ -28,6 +28,25 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 
+/**
+ * API JSON untuk app PWA (GitHub Pages).
+ * Badan permintaan: {"fn": "apiCall", "args": [...]}
+ */
+var API_FUNCTIONS = { apiLogin: true, apiLogout: true, apiCall: true, apiInfo: true };
+
+function doPost(e) {
+  var out;
+  try {
+    var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (!API_FUNCTIONS[req.fn]) throw new Error('Fungsi tidak dibenarkan.');
+    var fn = globalThis[req.fn];
+    out = { ok: true, data: fn.apply(null, req.args || []) };
+  } catch (err) {
+    out = { ok: false, error: (err && err.message) || String(err) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
 function include(name) {
   return HtmlService.createHtmlOutputFromFile(name).getContent();
 }
@@ -858,6 +877,11 @@ var Core = (function () {
 function apiLogin(email, password) { return Core.login(email, password); }
 function apiLogout(token) { return Core.logout(token); }
 function apiCall(token, action, payload) { return Core.call(token, action, payload); }
+/** Maklumat awam (tanpa log masuk): nama & logo untuk skrin log masuk */
+function apiInfo() {
+  var s = Core.settings();
+  return { namaSistem: s.namaSistem, namaSekolah: s.namaSekolah, logoUrl: s.logoUrl };
+}
 
 // ===== Platform.js =====
 /**

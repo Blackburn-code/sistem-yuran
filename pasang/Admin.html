@@ -663,8 +663,24 @@
     var m = (e && e.message) || String(e);
     return m.replace(/^(Error|Exception|ReferenceError|TypeError):\s*/, '');
   }
+  var CFG = window.SY_CONFIG || null;
+  function apiReady() { return !CFG || (CFG.apiUrl && /^https:\/\/script\.google\.com\/.+\/exec$/.test(CFG.apiUrl)); }
   function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
+    if (CFG) {
+      if (!apiReady()) return Promise.reject(new Error('App belum disambung ke Google Sheet. Isi apiUrl dalam fail config.js.'));
+      return fetch(CFG.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ fn: fn, args: args }),
+        redirect: 'follow'
+      }).then(function (r) { return r.json(); }, function () {
+        throw new Error('Tiada sambungan internet. Cuba lagi.');
+      }).then(function (r) {
+        if (!r || !r.ok) throw new Error(cleanErr({ message: (r && r.error) || 'Ralat pelayan.' }));
+        return r.data;
+      });
+    }
     return new Promise(function (resolve, reject) {
       var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) { reject(new Error(cleanErr(e))); });
       r[fn].apply(r, args);
@@ -802,6 +818,7 @@
       '<p class="tagline">Kutipan yuran yang teratur, telus dan mudah dipantau.</p>' +
       '<form id="login-form" autocomplete="on">' +
       (message ? '<div class="form-error">' + esc(message) + '</div>' : '') +
+      (apiReady() ? '' : '<div class="form-error">App belum disambung ke Google Sheet. Isi <b>apiUrl</b> dalam fail config.js.</div>') +
       '<div class="field"><label for="lg-email">E-mel</label><div class="input-icon">' + icon('mail') + '<input id="lg-email" class="input" name="email" type="email" placeholder="admin@sekolah.my" autocomplete="username" required></div></div>' +
       '<div class="field"><label for="lg-pass">Kata Laluan</label><div class="input-icon">' + icon('lock') + '<input id="lg-pass" class="input" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required></div></div>' +
       '<button class="btn btn-gold" type="submit">Log Masuk ' + icon('arrow') + '</button>' +
@@ -872,6 +889,7 @@
       '<aside class="sidebar">' +
       '<div class="brand">' + logoMark() + '<div><div class="brand-name">' + esc(S.settings.namaSistem) + '</div><div class="brand-role">' + esc(role) + '</div></div></div>' +
       '<nav class="nav">' + nav + '</nav>' +
+      '<button class="btn btn-ghost hidden" id="install-app" style="margin-top:12px">' + icon('download') + ' Pasang App</button>' +
       '<div class="me-card"><div class="avatar">' + esc(initials(S.me.nama || S.me.email)) + '</div>' +
       '<div class="who" id="me-open" title="Akaun saya"><b>' + esc(S.me.nama || S.me.email) + '</b><span><i class="live-dot"></i>Dalam talian</span></div>' +
       '<button class="btn btn-icon btn-sm" id="logout" title="Log keluar" aria-label="Log keluar">' + icon('logout') + '</button></div>' +
@@ -898,6 +916,7 @@
       });
     });
     setPending(S.pendingCount);
+    if (window.SYInstall) window.SYInstall.bind($('#install-app'));
   }
 
   var PAGES = {};
@@ -1932,7 +1951,21 @@
   }
 
   // ================= Mula =================
+  function loadInfo() {
+    if (!CFG) return;
+    try {
+      var cached = JSON.parse(storage.get('sy_info') || 'null');
+      if (cached) { S.settings.namaSistem = cached.namaSistem || S.settings.namaSistem; S.settings.logoUrl = cached.logoUrl || ''; }
+    } catch (e) { }
+    if (!apiReady()) return;
+    run('apiInfo').then(function (info) {
+      var changed = info.namaSistem !== S.settings.namaSistem || (info.logoUrl || '') !== (S.settings.logoUrl || '');
+      storage.set('sy_info', JSON.stringify(info));
+      if (changed && !S.token) { S.settings.namaSistem = info.namaSistem; S.settings.logoUrl = info.logoUrl; renderLogin(); }
+    }).catch(function () { });
+  }
   function boot() {
+    loadInfo();
     S.token = storage.get('sy_token');
     if (!S.token) return renderLogin();
     startApp(storage.get('sy_page') || 'dashboard').catch(function () {

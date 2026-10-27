@@ -68,6 +68,25 @@ Selepas itu menu **Sistem Yuran** juga muncul dalam Google Sheet (setup, data de
 
 > Pengguna `clasp` boleh `clasp push` terus dari folder `apps-script/`.
 
+## App PWA (GitHub Pages)
+
+Folder `docs/` ialah app yang boleh dipasang di telefon (ikon sendiri, penuh skrin). Data tetap dalam Google Sheet; app berhubung dengan Apps Script melalui `doPost`.
+
+| App | Pautan |
+|---|---|
+| Ibu bapa | `https://<username>.github.io/sistem-yuran/` |
+| Admin | `https://<username>.github.io/sistem-yuran/admin/` |
+
+Langkah:
+1. Salin semula `pasang/Code.gs` ke Apps Script, simpan, kemudian **Deploy → Manage deployments → ✏️ → New version → Deploy**.
+2. Salin **Web app URL** (berakhir `/exec`).
+3. Di GitHub, buka `docs/config.js` → ✏️ → tampal URL pada `apiUrl` → **Commit changes**.
+4. Repo **Settings → General → Change visibility → Public**.
+5. **Settings → Pages** → Source: *Deploy from a branch* → pilih branch dan folder **/docs** → **Save**.
+6. Tunggu 1–2 minit, buka pautan admin dan tekan **Pasang App** (atau ⋮ → *Install app* / *Add to Home screen*).
+
+Selepas ubah kod: `npm run build` (jana semula `pasang/`, `docs/` dan preview). `docs/config.js` tidak ditulis ganti.
+
 ## Pembangunan
 
 ```bash

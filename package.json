@@ -4,6 +4,8 @@
   "scripts": {
     "test": "node dev/test-core.js",
     "preview": "node dev/build-preview.js",
-    "bundle": "node dev/build-bundle.js"
+    "bundle": "node dev/build-bundle.js",
+    "web": "node dev/build-web.js",
+    "build": "node dev/build-bundle.js && node dev/build-web.js && node dev/build-preview.js"
   }
 }
