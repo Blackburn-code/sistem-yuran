@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test": "node dev/test-core.js",
-    "preview": "node dev/build-preview.js"
+    "preview": "node dev/build-preview.js",
+    "bundle": "node dev/build-bundle.js"
   }
 }

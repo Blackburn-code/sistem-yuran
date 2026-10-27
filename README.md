@@ -31,7 +31,24 @@ Pautan ibu bapa boleh dikongsi dalam grup WhatsApp atau dijadikan kod QR. Pautan
 
 Bil bulanan dikira automatik: setiap bulan yang dikenakan (dari tarikh daftar pelajar hingga bulan semasa) yang belum dibayar dikira sebagai hutang.
 
-## Cara pasang
+## Cara pasang guna telefon (3 fail sahaja)
+
+Folder `pasang/` mengandungi semua kod yang sudah digabungkan kepada 3 fail.
+
+1. Di Chrome telefon, buka **sheets.new** dan namakan sheet "Sistem Yuran".
+2. Tekan ⋮ → tanda **Desktop site / Laman desktop**.
+3. Menu **Extensions → Apps Script**.
+4. **Code.gs**: padam isi asal. Buka `pasang/Code.gs` di GitHub → butang **Raw** → tekan lama → **Select all → Copy** → tampal → simpan.
+5. Tekan **+ → HTML**, namakan `Admin` dan tampal isi `pasang/Admin.html`.
+6. Tekan **+ → HTML**, namakan `Parent` dan tampal isi `pasang/Parent.html`.
+7. Pilih fungsi **setup** di atas → **Run** → benarkan akses (Advanced → Go to project).
+   Salin e-mel & kata laluan Super Admin daripada **Execution log**.
+8. **Deploy → New deployment → Web app** · Execute as **Me** · Access **Anyone** → **Deploy**.
+9. Salin URL yang diberi. Admin: tambah `?page=admin` di hujung.
+
+Selepas pasang, tutup "Desktop site". Panel admin direka untuk skrin telefon.
+
+## Cara pasang (komputer)
 
 1. Buat **Google Sheet** baharu (contoh: "Sistem Yuran").
 2. Buka **Extensions → Apps Script**.
@@ -56,6 +73,7 @@ Selepas itu menu **Sistem Yuran** juga muncul dalam Google Sheet (setup, data de
 ```bash
 npm test          # uji logik yuran, login, skop cawangan
 npm run preview   # bina dist/preview.html dengan data demo
+npm run bundle    # jana semula folder pasang/ selepas ubah kod
 ```
 
 Preview boleh dibuka terus dalam pelayar. Log masuk: `admin@demo.my` / `demo1234`
