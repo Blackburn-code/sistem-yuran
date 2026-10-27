@@ -1,5 +1,5 @@
 /* Service worker: simpan kulit app supaya cepat dibuka. Data sentiasa diambil terus dari Google Sheet. */
-var CACHE = 'sistem-yuran-v1';
+var CACHE = 'sistem-yuran-v2';
 var SHELL = ['./', './index.html', './admin/', './admin/index.html', './config.js', './pwa.js',
   './icons/icon-192.png', './icons/icon-512.png', './manifest.webmanifest', './admin/manifest.webmanifest'];
 

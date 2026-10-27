@@ -4,5 +4,5 @@
  * yang berakhir dengan /exec, di antara tanda petik di bawah.
  */
 window.SY_CONFIG = {
-  apiUrl: 'https://script.google.com/macros/s/AKfycbz6WK1Qvg-oL95eFWa4cO2JKUSspxVy4gmW3QKNOhQyWqGGPUg2RSxQ2rl-LXLZ-9RqzQ/exec'
+  apiUrl: 'https://script.google.com/macros/s/AKfycbx494HtnXAIigZUw9AVrFj5b-R1h0IjADP7mNrkS0LkmJU6nD86PmtUogfCtpegtq0nWQ/exec'
 };
