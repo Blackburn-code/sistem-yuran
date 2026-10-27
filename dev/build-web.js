@@ -58,7 +58,9 @@ fs.writeFileSync(path.join(out, 'admin', 'index.html'), admin);
 fs.writeFileSync(path.join(out, 'admin', 'manifest.webmanifest'), manifest('Sistem Yuran · Admin', 'Yuran Admin', '../'));
 
 // Ibu bapa
-let parent = inline(read('Parent.html')).replace('<base target="_top">', pwaHead('', 'manifest.webmanifest', 'Sistem Yuran'));
+let parent = inline(read('Parent.html'))
+  .replace('<?!= bootJson ?>', JSON.stringify({ namaSistem: 'Sistem Yuran', logoUrl: '' }))
+  .replace('<base target="_top">', pwaHead('', 'manifest.webmanifest', 'Sistem Yuran'));
 if (/<\?/.test(parent)) throw new Error('Scriptlet tertinggal dalam parent');
 fs.writeFileSync(path.join(out, 'index.html'), parent);
 fs.writeFileSync(path.join(out, 'manifest.webmanifest'), manifest('Sistem Yuran', 'Sistem Yuran', ''));

@@ -169,6 +169,53 @@ test('data demo & dashboard', () => {
   assert.ok(!resits.includes(r[0].noResit));
 });
 
+test('ibu bapa: semak IC/telefon, bayar, admin sahkan, resit', () => {
+  const c = load();
+  const t = c.apiLogin('super@x.my', 'rahsia123').token;
+  const a = c.apiCall(t, 'pelajar.save', { nama: 'Adik', ic: '200101-01-1111', telWaris: '012-345 6789', tarikhDaftar: '2026-09-01' });
+  const b = c.apiCall(t, 'pelajar.save', { nama: 'Abang', ic: '180101011112', telWaris: '+60123456789', tarikhDaftar: '2026-09-01' });
+  throwsMsg(() => c.parentLookup('999'), /Tiada rekod/);
+  const byIc = c.parentLookup('200101-01-1111');
+  assert.strictEqual(byIc.anak.length, 1);
+  assert.ok(!('telWaris' in byIc.anak[0]) && !('alamat' in byIc.anak[0]));
+  const byPhone = c.parentLookup('0123456789');
+  assert.strictEqual(byPhone.anak.length, 2); // adik-beradik
+  const pt = byPhone.token;
+  let d = c.parentDetail(pt, { id: a.id, tahun: 2026 });
+  assert.strictEqual(d.bulan[8].status, 'BELUM');
+  assert.strictEqual(d.sekolah.yuranBulanan, 60);
+  throwsMsg(() => c.parentDetail(byIc.token, { id: b.id }), /tidak dijumpai/); // token IC hanya untuk anak itu
+  const fail = { name: 'r.jpg', mimeType: 'image/jpeg', data: 'aGVsbG8=' };
+  throwsMsg(() => c.parentPay(pt, { pelajarId: a.id, bulan: ['2026-09'] }), /muat naik/);
+  throwsMsg(() => c.parentPay(pt, { pelajarId: a.id, bulan: ['2026-09'], fail: { mimeType: 'text/html', data: 'x' } }), /Format/);
+  throwsMsg(() => c.parentPay(pt, { pelajarId: a.id, bulan: ['2026-03'], fail }), /tidak dikenakan/);
+  const r = c.parentPay(pt, { pelajarId: a.id, bulan: ['2026-09', '2026-10'], jumlah: 1, fail });
+  assert.strictEqual(r.jumlah, 120); // jumlah ditetapkan oleh server, bukan ibu bapa
+  throwsMsg(() => c.parentPay(pt, { pelajarId: a.id, bulan: ['2026-09'], fail }), /menunggu pengesahan/);
+  d = c.parentDetail(pt, { id: a.id });
+  assert.strictEqual(d.bulan[8].status, 'PENDING');
+  const tx = c.apiCall(t, 'transaksi.list').filter((x) => x.status === 'PENDING');
+  assert.strictEqual(tx.length, 2);
+  assert.match(tx[0].buktiUrl, /drive\.google\.com/);
+  throwsMsg(() => c.parentReceipt(pt, { id: tx[0].id }), /selepas bayaran disahkan/);
+  c.apiCall(t, 'transaksi.verify', { id: tx[0].id });
+  c.apiCall(t, 'transaksi.reject', { id: tx[1].id, sebab: 'Resit kabur' });
+  const rc = c.parentReceipt(pt, { id: tx[0].id });
+  assert.ok(rc.tx.noResit && !('alamat' in rc.pelajar));
+  d = c.parentDetail(pt, { id: a.id });
+  const rej = d.transaksi.find((x) => x.status === 'REJECTED');
+  assert.strictEqual(rej.catatan, 'Resit kabur');
+  // bulan yang ditolak boleh dihantar semula
+  c.parentPay(pt, { pelajarId: a.id, bulan: [rej.id && tx[1].perkara], fail });
+  throwsMsg(() => c.parentDetail('palsu', { id: a.id }), /SESI_TAMAT/);
+});
+
+test('ibu bapa: had carian gagal', () => {
+  const c = load();
+  for (let i = 0; i < 40; i++) throwsMsg(() => c.parentLookup('000' + i), /Tiada rekod/);
+  throwsMsg(() => c.parentLookup('0001'), /Terlalu banyak/);
+});
+
 let failed = 0;
 for (const t of tests) {
   try { t.fn(); console.log('  ✓ ' + t.name); }

@@ -5,7 +5,7 @@
  *   .../exec             -> halaman ibu bapa
  *   .../exec?page=admin  -> panel admin
  */
-var API_VERSION = '2';
+var API_VERSION = '3';
 
 function doGet(e) {
   var page = (e && e.parameter && e.parameter.page) || '';
@@ -36,7 +36,10 @@ function doGet(e) {
  * API JSON untuk app PWA (GitHub Pages).
  * Badan permintaan: {"fn": "apiCall", "args": [...]}
  */
-var API_FUNCTIONS = { apiLogin: true, apiLogout: true, apiCall: true, apiInfo: true };
+var API_FUNCTIONS = {
+  apiLogin: true, apiLogout: true, apiCall: true, apiInfo: true,
+  parentLookup: true, parentDetail: true, parentPay: true, parentReceipt: true
+};
 
 function doPost(e) {
   var out;
@@ -98,6 +101,7 @@ function setup() {
   if (!('tahunMula' in current)) missing.tahunMula = String(new Date().getFullYear());
   if (Object.keys(missing).length) store.settingsSet(missing);
 
+  Platform.resitFolder(); // folder Drive untuk resit ibu bapa
   var message = 'Struktur Sistem Yuran sudah sedia.';
   if (!store.all('Admin').length) {
     var email = Session.getEffectiveUser().getEmail() || 'admin@sistemyuran.my';

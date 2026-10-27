@@ -2,7 +2,7 @@
 
 Sistem kutipan yuran sekolah menggunakan **Google Apps Script + Google Sheets**, dengan tema *Dark Luxury* (hitam & emas).
 
-Fasa 1 (siap): **Panel Admin**. Fasa seterusnya: halaman ibu bapa.
+Siap: **Panel Admin** dan **App Ibu Bapa** (semak IC/telefon, muat naik resit, resit rasmi).
 
 ## Pautan
 

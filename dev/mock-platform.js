@@ -66,7 +66,9 @@
       cacheGet: function (k) { var e = cache[k]; return e && e.exp > Date.now() ? e.v : null; },
       cachePut: function (k, v, s) { cache[k] = { v: v, exp: Date.now() + s * 1000 }; },
       cacheRemove: function (k) { delete cache[k]; },
-      withLock: function (fn) { return fn(); }
+      withLock: function (fn) { return fn(); },
+      _files: [],
+      saveFile: function (name, mime, data) { this._files.push({ name: name, mime: mime, size: data.length }); return 'https://drive.google.com/file/d/demo-' + this._files.length + '/view'; }
     };
   }
 

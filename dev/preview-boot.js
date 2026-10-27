@@ -7,6 +7,10 @@
   store.insert('Admin', Core.makeAdmin({ email: 'admin@demo.my', nama: 'Super Admin', password: 'demo1234', peranan: 'SuperAdmin' }));
   store.insert('Admin', Core.makeAdmin({ email: 'timur@demo.my', nama: 'Admin Timur', password: 'demo1234', peranan: 'Admin', cawangan: 'Cawangan Timur' }));
   Demo.seed(store);
+  // Pelajar contoh untuk cuba app ibu bapa: IC 200415101234 atau tel 0123456789 (2 adik-beradik)
+  var demo = store.all('Pelajar').filter(function (p) { return p.status === 'Aktif'; });
+  store.update('Pelajar', demo[2].id, { ic: '200415101234', telWaris: '0123456789' });
+  store.update('Pelajar', demo[7].id, { telWaris: '0123456789' });
 
   function runner(success, failure) {
     var target = {};

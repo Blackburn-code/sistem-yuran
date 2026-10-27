@@ -18,6 +18,23 @@ var Platform = {
 
   now: function () { return new Date(); },
 
+  /** Folder Google Drive untuk resit yang dimuat naik oleh ibu bapa */
+  resitFolder: function () {
+    var props = PropertiesService.getScriptProperties();
+    var id = props.getProperty('RESIT_FOLDER_ID');
+    if (id) {
+      try { return DriveApp.getFolderById(id); } catch (e) { /* folder dipadam: cipta semula */ }
+    }
+    var folder = DriveApp.createFolder('Sistem Yuran - Resit');
+    props.setProperty('RESIT_FOLDER_ID', folder.getId());
+    return folder;
+  },
+
+  saveFile: function (name, mimeType, base64) {
+    var blob = Utilities.newBlob(Utilities.base64Decode(base64), mimeType, name);
+    return this.resitFolder().createFile(blob).getUrl();
+  },
+
   cacheGet: function (key) { return CacheService.getScriptCache().get(key); },
   cachePut: function (key, value, seconds) { CacheService.getScriptCache().put(key, value, seconds); },
   cacheRemove: function (key) { CacheService.getScriptCache().remove(key); },

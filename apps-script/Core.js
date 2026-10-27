@@ -685,6 +685,157 @@ var Core = (function () {
     return publicSettings(settings());
   };
 
+  // ================= Ibu bapa (tanpa log masuk admin) =================
+  var PARENT_MAX_FAIL = 40;     // cubaan gagal (semua pengguna) dalam 10 minit
+  var MAX_FILE_BYTES = 6 * 1024 * 1024;
+  var FILE_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif', 'application/pdf': 'pdf' };
+
+  function normPhone(v) {
+    var d = str(v).replace(/\D/g, '');
+    if (d.indexOf('60') === 0) d = d.slice(1);
+    if (d && d.charAt(0) !== '0') d = '0' + d;
+    return d;
+  }
+  function parentIds(token) {
+    var v = token ? Platform.cacheGet('par_' + token) : null;
+    if (!v) fail('SESI_TAMAT');
+    Platform.cachePut('par_' + token, v, SESSION_SECONDS);
+    return v.split(',');
+  }
+  function parentPelajar(token, id) {
+    if (parentIds(token).indexOf(id) < 0) fail('Pelajar tidak dijumpai.');
+    var p = store().all('Pelajar').filter(function (x) { return x.id === id; })[0];
+    if (!p) fail('Pelajar tidak dijumpai.');
+    return p;
+  }
+  function publicPelajar(p) {
+    return { id: p.id, nama: p.nama, ic: p.ic, kelas: p.kelas, cawangan: p.cawangan, tahun: p.tahun, status: p.status };
+  }
+  function parentInfo(s) {
+    return {
+      namaSistem: s.namaSistem, namaSekolah: s.namaSekolah, logoUrl: s.logoUrl, telSekolah: s.telSekolah,
+      namaBank: s.namaBank, namaAkaun: s.namaAkaun, noAkaun: s.noAkaun, yuranBulanan: num(s.yuranBulanan)
+    };
+  }
+
+  function parentLookup(q) {
+    q = str(q);
+    if (!q) fail('Sila masukkan No. MyKid / IC pelajar atau No. telefon waris.');
+    var fails = parseInt(Platform.cacheGet('par_fail') || '0', 10);
+    if (fails >= PARENT_MAX_FAIL) fail('Terlalu banyak carian. Sila cuba lagi dalam 10 minit.');
+    var ic = normIc(q);
+    var phone = q.replace(/\D/g, '').length >= 9 ? normPhone(q) : '';
+    var anak = store().all('Pelajar').filter(function (p) {
+      return (ic && p.ic === ic) || (phone && normPhone(p.telWaris) === phone);
+    });
+    if (!anak.length) {
+      Platform.cachePut('par_fail', String(fails + 1), 600);
+      fail('Tiada rekod dijumpai. Semak semula nombor yang dimasukkan atau hubungi pihak sekolah.');
+    }
+    var token = Platform.randomToken();
+    Platform.cachePut('par_' + token, anak.map(function (p) { return p.id; }).join(','), SESSION_SECONDS);
+    return {
+      token: token,
+      anak: anak.sort(function (a, b) { return a.nama.localeCompare(b.nama); }).map(publicPelajar),
+      sekolah: parentInfo(settings())
+    };
+  }
+
+  function parentDetail(token, payload) {
+    payload = payload || {};
+    var p = parentPelajar(token, payload.id);
+    var s = settings();
+    var allTx = store().all('Transaksi');
+    var idx = txIndex(allTx);
+    var lainRows = store().all('YuranLain');
+    var lainMap = byId(lainRows);
+    var year = parseInt(payload.tahun, 10) || now().getFullYear();
+    var ids = {}; ids[p.id] = p;
+    var txs = allTx.filter(function (t) { return t.pelajarId === p.id; })
+      .sort(function (a, b) { return a.dicipta < b.dicipta ? 1 : -1; })
+      .map(function (t) {
+        var d = decorateTx(t, ids, lainMap);
+        return {
+          id: d.id, tarikh: d.tarikh, perkaraLabel: d.perkaraLabel, jumlah: d.jumlah, kaedah: d.kaedah,
+          status: d.status, noResit: d.noResit, catatan: d.status === 'REJECTED' ? d.catatan : ''
+        };
+      });
+    return {
+      pelajar: publicPelajar(p),
+      tahun: year,
+      tahunMula: parseInt(s.tahunMula, 10) || year,
+      bulan: monthStatuses(p, idx, s, year),
+      lain: lainStatuses(p, idx, lainRows),
+      ringkasan: studentSummary(p, idx, s, lainRows),
+      transaksi: txs,
+      sekolah: parentInfo(s)
+    };
+  }
+
+  function parentPay(token, d) {
+    d = d || {};
+    var p = parentPelajar(token, d.pelajarId);
+    var jenis = d.jenis === 'Lain' ? 'Lain' : 'Bulanan';
+    var s = settings();
+    var perkara, jumlah;
+    var idx = txIndex(store().all('Transaksi'));
+    if (jenis === 'Bulanan') {
+      perkara = (d.bulan || []).map(str).filter(function (k) { return /^\d{4}-\d{2}$/.test(k); });
+      if (!perkara.length) fail('Pilih sekurang-kurangnya satu bulan.');
+      var cache = {};
+      perkara.forEach(function (k) {
+        var y = k.slice(0, 4);
+        cache[y] = cache[y] || monthStatuses(p, idx, s, parseInt(y, 10));
+        var m = cache[y][parseInt(k.slice(5), 10) - 1];
+        if (!m || m.status === 'TIADA') fail('Bulan ' + k + ' tidak dikenakan yuran.');
+        if (m.status === 'SUDAH') fail(perkaraLabel({ jenis: 'Bulanan', perkara: k }) + ' sudah dibayar.');
+        if (m.status === 'PENDING') fail(perkaraLabel({ jenis: 'Bulanan', perkara: k }) + ' sedang menunggu pengesahan.');
+      });
+      jumlah = num(s.yuranBulanan);
+    } else {
+      var yl = lainStatuses(p, idx, store().all('YuranLain')).filter(function (l) { return l.id === str(d.yuranLainId); })[0];
+      if (!yl) fail('Yuran tidak dijumpai.');
+      if (yl.status !== 'BELUM') fail('Yuran ini ' + (yl.status === 'SUDAH' ? 'sudah dibayar.' : 'sedang menunggu pengesahan.'));
+      perkara = [yl.id];
+      jumlah = yl.jumlah;
+    }
+    var f = d.fail || {};
+    var mime = str(f.mimeType).toLowerCase();
+    if (!f.data) fail('Sila muat naik resit atau bukti bayaran.');
+    if (!FILE_TYPES[mime]) fail('Format fail tidak disokong. Guna gambar (JPG/PNG) atau PDF.');
+    if (String(f.data).length * 0.75 > MAX_FILE_BYTES) fail('Saiz fail terlalu besar (maksimum 6MB).');
+    var tarikh = /^\d{4}-\d{2}-\d{2}$/.test(str(d.tarikh)) ? str(d.tarikh) : isoDate(now());
+    var nama = isoDate(now()) + '_' + p.ic + '_' + perkara.join('+') + '.' + FILE_TYPES[mime];
+    var url = Platform.saveFile(nama, mime, String(f.data));
+
+    return Platform.withLock(function () {
+      var existing = store().all('Transaksi').filter(function (t) {
+        return t.pelajarId === p.id && t.jenis === jenis && (t.status === 'VERIFIED' || t.status === 'PENDING');
+      });
+      perkara.forEach(function (k) {
+        if (existing.some(function (t) { return t.perkara === k; })) fail('Bayaran ini sudah dihantar sebelum ini.');
+      });
+      var stamp = isoDateTime(now());
+      perkara.forEach(function (k) {
+        store().insert('Transaksi', {
+          id: Platform.uuid(), tarikh: tarikh, pelajarId: p.id, jenis: jenis, perkara: k, jumlah: String(jumlah),
+          kaedah: str(d.kaedah) || 'Pindahan Bank', buktiUrl: url, status: 'PENDING', noResit: '',
+          disahkanOleh: '', tarikhSah: '', catatan: str(d.catatan).slice(0, 300), dicipta: stamp
+        });
+      });
+      return { bilangan: perkara.length, jumlah: jumlah * perkara.length };
+    });
+  }
+
+  function parentReceipt(token, payload) {
+    var t = store().all('Transaksi').filter(function (x) { return x.id === (payload || {}).id; })[0];
+    if (!t) fail('Resit tidak dijumpai.');
+    var p = parentPelajar(token, t.pelajarId);
+    if (t.status !== 'VERIFIED') fail('Resit hanya tersedia selepas bayaran disahkan.');
+    var ids = {}; ids[p.id] = p;
+    return { tx: decorateTx(t, ids, byId(store().all('YuranLain'))), pelajar: publicPelajar(p), settings: publicSettings(settings()) };
+  }
+
   function call(token, action, payload) {
     var admin = authenticate(token);
     var fn = actions[action];
@@ -695,6 +846,10 @@ var Core = (function () {
   return {
     BULAN: BULAN,
     BULAN_PENUH: BULAN_PENUH,
+    parentLookup: parentLookup,
+    parentDetail: parentDetail,
+    parentPay: parentPay,
+    parentReceipt: parentReceipt,
     login: login,
     logout: logout,
     call: call,
@@ -716,3 +871,9 @@ function apiInfo() {
   var s = Core.settings();
   return { namaSistem: s.namaSistem, namaSekolah: s.namaSekolah, logoUrl: s.logoUrl };
 }
+
+// Fungsi untuk app ibu bapa
+function parentLookup(q) { return Core.parentLookup(q); }
+function parentDetail(token, payload) { return Core.parentDetail(token, payload); }
+function parentPay(token, data) { return Core.parentPay(token, data); }
+function parentReceipt(token, payload) { return Core.parentReceipt(token, payload); }

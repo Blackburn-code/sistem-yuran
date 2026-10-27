@@ -7,7 +7,8 @@ const path = require('path');
 const src = path.join(__dirname, '..', 'apps-script');
 const read = (f) => fs.readFileSync(path.join(src, f), 'utf8');
 
-let html = read('Admin.html');
+function build(page, outName) {
+let html = read(page);
 html = html.replace(/<\?!= include\('(\w+)'\); \?>/g, (_, name) => read(name + '.html'));
 html = html.replace('<?!= bootJson ?>', JSON.stringify({ namaSistem: 'Sistem Yuran', logoUrl: '' }));
 const server = ['Schema.js', 'Core.js', 'Demo.js'].map(read).join('\n')
@@ -17,5 +18,8 @@ html = html.replace('<script>window.BOOT', '<script>\n' + server + '\n</script>\
 if (/<\?/.test(html)) throw new Error('Scriptlet belum diganti');
 const out = path.join(__dirname, '..', 'dist');
 fs.mkdirSync(out, { recursive: true });
-fs.writeFileSync(path.join(out, 'preview.html'), html);
-console.log('OK -> dist/preview.html (log masuk: admin@demo.my / demo1234)');
+fs.writeFileSync(path.join(out, outName), html);
+}
+build('Admin.html', 'preview.html');
+build('Parent.html', 'preview-parent.html');
+console.log('OK -> dist/preview.html (admin@demo.my / demo1234) dan dist/preview-parent.html');

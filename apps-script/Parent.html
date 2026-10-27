@@ -4,18 +4,17 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <?!= include('Styles'); ?>
   </head>
   <body>
-    <!-- Bahagian ibu bapa akan dibina dalam fasa seterusnya. -->
-    <div class="login-wrap">
-      <div class="card login-card" style="text-align:center">
-        <div class="brand-mark"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 2-6M12 21l4-12-2-6"/></svg></div>
-        <div class="eyebrow">Semakan Yuran</div>
-        <h1 style="margin-top:12px" id="nm">Sistem <span class="gold-text">Yuran</span></h1>
-        <p class="tagline">Halaman semakan untuk ibu bapa sedang disiapkan. Sila hubungi pihak sekolah untuk sebarang pertanyaan.</p>
-      </div>
-    </div>
+    <div id="app"></div>
+    <div id="modal-root"></div>
+    <div id="toast-root"></div>
+    <div id="print-area"></div>
+    <script>window.BOOT = <?!= bootJson ?>;</script>
+    <?!= include('ParentApp'); ?>
   </body>
 </html>
