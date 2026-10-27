@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="../icons/icon-192.png">
     <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
     <meta name="sy-sw" content="../sw.js">
-    <script src="../config.js"></script>
+    <script>document.write('<script src="../config.js?t=' + Date.now() + '"><\/script>');</script>
     <script src="../pwa.js"></script>
     <style>@media (display-mode: standalone){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}</style>
     <meta charset="utf-8">
@@ -690,7 +690,7 @@
       }).then(function (r) {
         return r.json().catch(function () { throw new Error(SERVER_ERR); });
       }, function () {
-        throw new Error(navigator.onLine === false ? 'Tiada sambungan internet. Cuba lagi.' : SERVER_ERR);
+        throw new Error(navigator.onLine === false ? 'Tiada sambungan internet. Cuba lagi.' : SERVER_ERR + ' (Link: …' + String(CFG.apiUrl).slice(-22) + ')');
       }).then(function (r) {
         if (!r || !r.ok) throw new Error(cleanErr({ message: (r && r.error) || 'Ralat pelayan.' }));
         return r.data;

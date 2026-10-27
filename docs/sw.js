@@ -1,6 +1,6 @@
 /* Service worker: simpan kulit app supaya cepat dibuka. Data sentiasa diambil terus dari Google Sheet. */
-var CACHE = 'sistem-yuran-v2';
-var SHELL = ['./', './index.html', './admin/', './admin/index.html', './config.js', './pwa.js',
+var CACHE = 'sistem-yuran-v3';
+var SHELL = ['./', './index.html', './admin/', './admin/index.html', './pwa.js',
   './icons/icon-192.png', './icons/icon-512.png', './manifest.webmanifest', './admin/manifest.webmanifest'];
 
 self.addEventListener('install', function (e) {
@@ -15,7 +15,7 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return; // API & fon: terus ke rangkaian
   // Rangkaian dahulu (versi terkini), cache jika luar talian
-  e.respondWith(fetch(e.request).then(function (res) {
+  e.respondWith(fetch(e.request, { cache: 'no-cache' }).then(function (res) {
     var copy = res.clone();
     caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
     return res;

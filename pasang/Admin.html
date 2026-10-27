@@ -678,7 +678,7 @@
       }).then(function (r) {
         return r.json().catch(function () { throw new Error(SERVER_ERR); });
       }, function () {
-        throw new Error(navigator.onLine === false ? 'Tiada sambungan internet. Cuba lagi.' : SERVER_ERR);
+        throw new Error(navigator.onLine === false ? 'Tiada sambungan internet. Cuba lagi.' : SERVER_ERR + ' (Link: …' + String(CFG.apiUrl).slice(-22) + ')');
       }).then(function (r) {
         if (!r || !r.ok) throw new Error(cleanErr({ message: (r && r.error) || 'Ralat pelayan.' }));
         return r.data;

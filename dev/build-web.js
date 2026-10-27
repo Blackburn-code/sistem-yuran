@@ -26,7 +26,8 @@ function pwaHead(base, manifest, title) {
     `<link rel="icon" type="image/png" sizes="192x192" href="${base}icons/icon-192.png">`,
     `<link rel="apple-touch-icon" href="${base}icons/apple-touch-icon.png">`,
     `<meta name="sy-sw" content="${base}sw.js">`,
-    `<script src="${base}config.js"></script>`,
+    // config.js sentiasa diambil baharu (elak cache URL lama)
+    `<script>document.write('<script src="${base}config.js?t=' + Date.now() + '"><\\/script>');</script>`,
     `<script src="${base}pwa.js"></script>`,
     // Elak kandungan tersorok di bawah "notch" bila dibuka penuh skrin
     '<style>@media (display-mode: standalone){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}</style>'
