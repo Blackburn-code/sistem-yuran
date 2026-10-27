@@ -684,7 +684,14 @@
       return fetch(CFG.apiUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args }), redirect: 'follow' })
         .then(function (r) { return r.json().catch(function () { throw new Error(SERVER_ERR); }); },
           function () { throw new Error(navigator.onLine === false ? 'Tiada sambungan internet. Cuba lagi.' : SERVER_ERR); })
-        .then(function (r) { if (!r || !r.ok) throw new Error(cleanErr((r && r.error) || SERVER_ERR)); return r.data; });
+        .then(function (r) {
+          if (!r || !r.ok) {
+            var msg = cleanErr((r && r.error) || SERVER_ERR);
+            if (/tidak dibenarkan/i.test(msg)) msg += ' Apps Script masih versi lama (link …' + String(CFG.apiUrl).slice(-12) + ').';
+            throw new Error(msg);
+          }
+          return r.data;
+        });
     }
     return new Promise(function (resolve, reject) {
       var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) { reject(new Error(cleanErr(e && e.message || e))); });
