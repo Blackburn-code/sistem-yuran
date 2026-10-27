@@ -1,0 +1,8 @@
+{
+  "name": "sistem-yuran",
+  "private": true,
+  "scripts": {
+    "test": "node dev/test-core.js",
+    "preview": "node dev/build-preview.js"
+  }
+}
