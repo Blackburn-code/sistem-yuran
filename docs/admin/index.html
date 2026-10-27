@@ -676,6 +676,7 @@
     return m.replace(/^(Error|Exception|ReferenceError|TypeError):\s*/, '');
   }
   var CFG = window.SY_CONFIG || null;
+  var SERVER_ERR = 'Tidak dapat berhubung dengan Google Apps Script. Pastikan Code.gs terkini, sudah Deploy "New version", dan akses "Anyone".';
   function apiReady() { return !CFG || (CFG.apiUrl && /^https:\/\/script\.google\.com\/.+\/exec$/.test(CFG.apiUrl)); }
   function run(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
@@ -686,8 +687,10 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ fn: fn, args: args }),
         redirect: 'follow'
-      }).then(function (r) { return r.json(); }, function () {
-        throw new Error('Tiada sambungan internet. Cuba lagi.');
+      }).then(function (r) {
+        return r.json().catch(function () { throw new Error(SERVER_ERR); });
+      }, function () {
+        throw new Error(navigator.onLine === false ? 'Tiada sambungan internet. Cuba lagi.' : SERVER_ERR);
       }).then(function (r) {
         if (!r || !r.ok) throw new Error(cleanErr({ message: (r && r.error) || 'Ralat pelayan.' }));
         return r.data;

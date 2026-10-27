@@ -9,8 +9,16 @@
  *   .../exec             -> halaman ibu bapa
  *   .../exec?page=admin  -> panel admin
  */
+var API_VERSION = '2';
+
 function doGet(e) {
   var page = (e && e.parameter && e.parameter.page) || '';
+  // Semakan cepat: buka .../exec?semak=1 dalam pelayar
+  if (e && e.parameter && e.parameter.semak) {
+    var info = { ok: true, versi: API_VERSION, mesej: 'Apps Script OK. App PWA boleh disambung.' };
+    try { info.namaSistem = Core.settings().namaSistem; } catch (err) { info.ok = false; info.mesej = 'Jalankan setup() dahulu: ' + err.message; }
+    return ContentService.createTextOutput(JSON.stringify(info)).setMimeType(ContentService.MimeType.JSON);
+  }
   var file = page === 'admin' ? 'Admin' : 'Parent';
   var t = HtmlService.createTemplateFromFile(file);
   t.appUrl = ScriptApp.getService().getUrl();
